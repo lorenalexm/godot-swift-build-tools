@@ -5,6 +5,8 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND noninteractive
 ENV SWIFT_PRODUCT_NAME godot-project
 ENV SWIFT_BUILD_TYPE debug
+ENV GODOT_PROJECT_LIBRARIES_DIRECTORY game/libraries
+ENV GODOT_BUILD_TYPE debug
 
 # Update and install dependencies from apt.
 RUN apt-get update &&\
@@ -39,7 +41,12 @@ RUN source ~/.bash_profile &&\
     swiftenv global DEVELOPMENT-SNAPSHOT-2021-06-01-a &&\
     swiftenv version
 
+# Create tools directory, add build install tool, finally create build directory.
+WORKDIR /tools
+ADD build .
 WORKDIR /build
+
 # Reload bash profile, build Swift project, and generate Godot libraries.
 CMD source ~/.bash_profile &&\
-    SWIFTPM_ENABLE_PLUGINS=1 swift build --product ${SWIFT_PRODUCT_NAME} -c ${SWIFT_BUILD_TYPE}
+    SWIFTPM_ENABLE_PLUGINS=1 swift build --product ${SWIFT_PRODUCT_NAME} -c ${SWIFT_BUILD_TYPE} &&\
+    /tools/build --configuration ${GODOT_BUILD_TYPE} --install ${GODOT_PROJECT_LIBRARIES_DIRECTORY} --working-directory "/build"
